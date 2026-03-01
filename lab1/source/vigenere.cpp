@@ -66,9 +66,6 @@ std::string Vigenere::encrypt(const std::string& plaintext, const std::string& k
     size_t keyIndex = 0;
     
     for (wchar_t ch : wplaintext) {
-        if (ch == L' ' || ch == L'\t' || ch == L'\n' || ch == L'\r') {
-            continue;
-        }
         if ((ch >= L'А' && ch <= L'Я') || (ch >= L'а' && ch <= L'я') || ch == L'Ё' || ch == L'ё') {
             int plainIndex = charToIndex(ch);
             int keyCharIndex = charToIndex(keyFiltered[keyIndex % keyFiltered.length()]);
@@ -99,9 +96,6 @@ std::string Vigenere::decrypt(const std::string& ciphertext, const std::string& 
     size_t keyIndex = 0;
     
     for (wchar_t ch : wciphertext) {
-        if (ch == L' ' || ch == L'\t' || ch == L'\n' || ch == L'\r') {
-            continue;
-        }
         if ((ch >= L'А' && ch <= L'Я') || (ch >= L'а' && ch <= L'я') || ch == L'Ё' || ch == L'ё') {
             int cipherIndex = charToIndex(ch);
             int keyCharIndex = charToIndex(keyFiltered[keyIndex % keyFiltered.length()]);

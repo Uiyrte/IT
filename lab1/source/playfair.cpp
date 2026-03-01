@@ -79,36 +79,36 @@ void Playfair::findPosition(char matrix[5][5], char ch, int& row, int& col) {
     }
 }
 
-std::string Playfair::encryptPair(char a, char b, char standard[5][5], char key1[5][5], char key2[5][5]) {
+std::string Playfair::encryptPair(char a, char b, char key1[5][5], char key2[5][5], char key3[5][5], char key4[5][5]) {
     int row1, col1, row2, col2;
 
-    findPosition(standard, a, row1, col1);
-    findPosition(standard, b, row2, col2);
+    findPosition(key1, a, row1, col1);
+    findPosition(key4, b, row2, col2);
 
     std::string result;
-    result += key1[row1][col2];
-    result += key2[row2][col1];
+    result += key2[row1][col2];
+    result += key3[row2][col1];
     return result;
 }
 
-std::string Playfair::decryptPair(char a, char b, char standard[5][5], char key1[5][5], char key2[5][5]) {
+std::string Playfair::decryptPair(char a, char b, char key1[5][5], char key2[5][5], char key3[5][5], char key4[5][5]) {
     int row1, col2, row2, col1;
 
-    findPosition(key1, a, row1, col2);
-    findPosition(key2, b, row2, col1);
+    findPosition(key2, a, row1, col2);
+    findPosition(key3, b, row2, col1);
 
     std::string result;
-    result += standard[row1][col1];
-    result += standard[row2][col2];
+    result += key1[row1][col1];
+    result += key4[row2][col2];
     return result;
 }
 
-std::string Playfair::encrypt(const std::string& plaintext, const std::string& key1, const std::string& key2) {
+std::string Playfair::encrypt(const std::string& plaintext, const std::string& key1, const std::string& key2, const std::string& key3, const std::string& key4) {
     char matrices[4][5][5];
-    createStandardMatrix(matrices[0]);
-    createStandardMatrix(matrices[1]);
-    createKeyMatrix(key1, matrices[2]);
-    createKeyMatrix(key2, matrices[3]);
+    createKeyMatrix(key1, matrices[0]);
+    createKeyMatrix(key2, matrices[1]);
+    createKeyMatrix(key3, matrices[2]);
+    createKeyMatrix(key4, matrices[3]);
 
     std::string result = plaintext;
     std::vector<size_t> letterPositions;
@@ -130,34 +130,37 @@ std::string Playfair::encrypt(const std::string& plaintext, const std::string& k
         return result;
     }
 
-    if (letters.length() % 2 != 0) {
+    bool needsPadding = (letters.length() % 2 != 0);
+    
+    if (needsPadding) {
         letters += 'X';
-        letterPositions.push_back(std::string::npos);
     }
 
     std::string transformed;
     transformed.reserve(letters.size());
     for (size_t i = 0; i < letters.length(); i += 2) {
-        transformed += encryptPair(letters[i], letters[i + 1], matrices[0], matrices[2], matrices[3]);
+        transformed += encryptPair(letters[i], letters[i + 1], matrices[0], matrices[1], matrices[2], matrices[3]);
     }
 
-    for (size_t i = 0; i < transformed.size(); ++i) {
-        if (letterPositions[i] == std::string::npos) {
-            result += transformed[i];
-        } else {
-            result[letterPositions[i]] = transformed[i];
-        }
+    size_t transformedSize = needsPadding ? transformed.size() - 1 : transformed.size();
+    for (size_t i = 0; i < transformedSize; ++i) {
+        result[letterPositions[i]] = transformed[i];
+    }
+    
+    if (needsPadding) {
+        size_t lastLetterPos = letterPositions[letterPositions.size() - 1];
+        result.insert(lastLetterPos + 1, 1, transformed[transformed.size() - 1]);
     }
 
     return result;
 }
 
-std::string Playfair::decrypt(const std::string& ciphertext, const std::string& key1, const std::string& key2) {
+std::string Playfair::decrypt(const std::string& ciphertext, const std::string& key1, const std::string& key2, const std::string& key3, const std::string& key4) {
     char matrices[4][5][5];
-    createStandardMatrix(matrices[0]);
-    createStandardMatrix(matrices[1]);
-    createKeyMatrix(key1, matrices[2]);
-    createKeyMatrix(key2, matrices[3]);
+    createKeyMatrix(key1, matrices[0]);
+    createKeyMatrix(key2, matrices[1]);
+    createKeyMatrix(key3, matrices[2]);
+    createKeyMatrix(key4, matrices[3]);
 
     std::string result = ciphertext;
     std::vector<size_t> letterPositions;
@@ -179,23 +182,26 @@ std::string Playfair::decrypt(const std::string& ciphertext, const std::string& 
         return result;
     }
 
-    if (letters.length() % 2 != 0) {
+    bool needsPadding = (letters.length() % 2 != 0);
+    
+    if (needsPadding) {
         letters += 'X';
-        letterPositions.push_back(std::string::npos);
     }
 
     std::string transformed;
     transformed.reserve(letters.size());
     for (size_t i = 0; i < letters.length(); i += 2) {
-        transformed += decryptPair(letters[i], letters[i + 1], matrices[1], matrices[2], matrices[3]);
+        transformed += decryptPair(letters[i], letters[i + 1], matrices[0], matrices[1], matrices[2], matrices[3]);
     }
 
-    for (size_t i = 0; i < transformed.size(); ++i) {
-        if (letterPositions[i] == std::string::npos) {
-            result += transformed[i];
-        } else {
-            result[letterPositions[i]] = transformed[i];
-        }
+    size_t transformedSize = needsPadding ? transformed.size() - 1 : transformed.size();
+    for (size_t i = 0; i < transformedSize; ++i) {
+        result[letterPositions[i]] = transformed[i];
+    }
+    
+    if (needsPadding) {
+        size_t lastLetterPos = letterPositions[letterPositions.size() - 1];
+        result.insert(lastLetterPos + 1, 1, transformed[transformed.size() - 1]);
     }
 
     return result;

@@ -70,11 +70,11 @@ QWidget* MainWindow::createPlayfairTab() {
     QWidget *tab = new QWidget();
     QVBoxLayout *layout = new QVBoxLayout(tab);
     
-    QGroupBox *keyGroup = new QGroupBox("Ключи шифрования (для таблиц 3 и 4)");
+    QGroupBox *keyGroup = new QGroupBox("Ключи шифрования (4 ключа)");
     QVBoxLayout *keysLayout = new QVBoxLayout();
 
     QHBoxLayout *key1Layout = new QHBoxLayout();
-    QLabel *key1Label = new QLabel("Ключ 1:");
+    QLabel *key1Label = new QLabel("Ключ 1 (лев.верх. таблица):");
     playfairKey1 = new QLineEdit();
     playfairKey1->setPlaceholderText("Введите первый ключ (только английские буквы)");
     playfairKey1->setContextMenuPolicy(Qt::DefaultContextMenu);
@@ -85,7 +85,7 @@ QWidget* MainWindow::createPlayfairTab() {
     keysLayout->addLayout(key1Layout);
 
     QHBoxLayout *key2Layout = new QHBoxLayout();
-    QLabel *key2Label = new QLabel("Ключ 2:");
+    QLabel *key2Label = new QLabel("Ключ 2 (прав.верх. таблица):");
     playfairKey2 = new QLineEdit();
     playfairKey2->setPlaceholderText("Введите второй ключ (только английские буквы)");
     playfairKey2->setContextMenuPolicy(Qt::DefaultContextMenu);
@@ -94,6 +94,28 @@ QWidget* MainWindow::createPlayfairTab() {
     key2Layout->addWidget(key2Label);
     key2Layout->addWidget(playfairKey2);
     keysLayout->addLayout(key2Layout);
+
+    QHBoxLayout *key3Layout = new QHBoxLayout();
+    QLabel *key3Label = new QLabel("Ключ 3 (лев.ниж. таблица):");
+    playfairKey3 = new QLineEdit();
+    playfairKey3->setPlaceholderText("Введите третий ключ (только английские буквы)");
+    playfairKey3->setContextMenuPolicy(Qt::DefaultContextMenu);
+    QRegularExpressionValidator *englishValidator3 = new QRegularExpressionValidator(QRegularExpression("[A-Za-z]*"), playfairKey3);
+    playfairKey3->setValidator(englishValidator3);
+    key3Layout->addWidget(key3Label);
+    key3Layout->addWidget(playfairKey3);
+    keysLayout->addLayout(key3Layout);
+
+    QHBoxLayout *key4Layout = new QHBoxLayout();
+    QLabel *key4Label = new QLabel("Ключ 4 (прав.ниж. таблица):");
+    playfairKey4 = new QLineEdit();
+    playfairKey4->setPlaceholderText("Введите четвёртый ключ (только английские буквы)");
+    playfairKey4->setContextMenuPolicy(Qt::DefaultContextMenu);
+    QRegularExpressionValidator *englishValidator4 = new QRegularExpressionValidator(QRegularExpression("[A-Za-z]*"), playfairKey4);
+    playfairKey4->setValidator(englishValidator4);
+    key4Layout->addWidget(key4Label);
+    key4Layout->addWidget(playfairKey4);
+    keysLayout->addLayout(key4Layout);
 
     keyGroup->setLayout(keysLayout);
     layout->addWidget(keyGroup);
@@ -214,16 +236,22 @@ QWidget* MainWindow::createVigenereTab() {
 void MainWindow::onPlayfairEncrypt() {
     PreparedPlayfairKey preparedKey1 = preparePlayfairKey(playfairKey1->text());
     PreparedPlayfairKey preparedKey2 = preparePlayfairKey(playfairKey2->text());
+    PreparedPlayfairKey preparedKey3 = preparePlayfairKey(playfairKey3->text());
+    PreparedPlayfairKey preparedKey4 = preparePlayfairKey(playfairKey4->text());
 
     playfairKey1->setText(preparedKey1.normalized);
     playfairKey2->setText(preparedKey2.normalized);
+    playfairKey3->setText(preparedKey3.normalized);
+    playfairKey4->setText(preparedKey4.normalized);
 
     QString key1 = preparedKey1.normalized;
     QString key2 = preparedKey2.normalized;
+    QString key3 = preparedKey3.normalized;
+    QString key4 = preparedKey4.normalized;
     QString input = playfairInput->toPlainText();
     
-    if (key1.isEmpty() || key2.isEmpty()) {
-        QMessageBox::warning(this, "Внимание", "Пожалуйста, введите оба ключа!");
+    if (key1.isEmpty() || key2.isEmpty() || key3.isEmpty() || key4.isEmpty()) {
+        QMessageBox::warning(this, "Внимание", "Пожалуйста, введите все четыре ключа!");
         return;
     }
     
@@ -232,12 +260,12 @@ void MainWindow::onPlayfairEncrypt() {
         return;
     }
 
-    if (preparedKey1.hadDuplicates || preparedKey2.hadDuplicates) {
+    if (preparedKey1.hadDuplicates || preparedKey2.hadDuplicates || preparedKey3.hadDuplicates || preparedKey4.hadDuplicates) {
         QMessageBox::information(this, "Уведомление о ключе Playfair",
             "Повторяющиеся буквы удалены из ключа(ей) Playfair.");
     }
     
-    std::string result = playfairCipher.encrypt(input.toStdString(), key1.toStdString(), key2.toStdString());
+    std::string result = playfairCipher.encrypt(input.toStdString(), key1.toStdString(), key2.toStdString(), key3.toStdString(), key4.toStdString());
     playfairOutput->setPlainText(QString::fromStdString(result));
     
     if (!playfairLoadedFilePath.isEmpty()) {
@@ -251,6 +279,7 @@ void MainWindow::onPlayfairEncrypt() {
             QTextStream out(&outputFile);
             out << QString::fromStdString(result);
             outputFile.close();
+            playfairLoadedFilePath.clear();
             QMessageBox::information(this, "Успешно", "Зашифрованный файл сохранен как:\n" + outputFileName);
         } else {
             QMessageBox::critical(this, "Ошибка", "Не удалось сохранить файл: " + outputFileName);
@@ -261,16 +290,22 @@ void MainWindow::onPlayfairEncrypt() {
 void MainWindow::onPlayfairDecrypt() {
     PreparedPlayfairKey preparedKey1 = preparePlayfairKey(playfairKey1->text());
     PreparedPlayfairKey preparedKey2 = preparePlayfairKey(playfairKey2->text());
+    PreparedPlayfairKey preparedKey3 = preparePlayfairKey(playfairKey3->text());
+    PreparedPlayfairKey preparedKey4 = preparePlayfairKey(playfairKey4->text());
 
     playfairKey1->setText(preparedKey1.normalized);
     playfairKey2->setText(preparedKey2.normalized);
+    playfairKey3->setText(preparedKey3.normalized);
+    playfairKey4->setText(preparedKey4.normalized);
 
     QString key1 = preparedKey1.normalized;
     QString key2 = preparedKey2.normalized;
+    QString key3 = preparedKey3.normalized;
+    QString key4 = preparedKey4.normalized;
     QString input = playfairInput->toPlainText();
     
-    if (key1.isEmpty() || key2.isEmpty()) {
-        QMessageBox::warning(this, "Внимание", "Пожалуйста, введите оба ключа!");
+    if (key1.isEmpty() || key2.isEmpty() || key3.isEmpty() || key4.isEmpty()) {
+        QMessageBox::warning(this, "Внимание", "Пожалуйста, введите все четыре ключа!");
         return;
     }
     
@@ -279,12 +314,12 @@ void MainWindow::onPlayfairDecrypt() {
         return;
     }
 
-    if (preparedKey1.hadDuplicates || preparedKey2.hadDuplicates) {
+    if (preparedKey1.hadDuplicates || preparedKey2.hadDuplicates || preparedKey3.hadDuplicates || preparedKey4.hadDuplicates) {
         QMessageBox::information(this, "Уведомление о ключе Playfair",
             "Повторяющиеся буквы удалены из ключа(ей) Playfair.");
     }
     
-    std::string result = playfairCipher.decrypt(input.toStdString(), key1.toStdString(), key2.toStdString());
+    std::string result = playfairCipher.decrypt(input.toStdString(), key1.toStdString(), key2.toStdString(), key3.toStdString(), key4.toStdString());
     playfairOutput->setPlainText(QString::fromStdString(result));
     
     if (!playfairLoadedFilePath.isEmpty()) {
@@ -298,6 +333,7 @@ void MainWindow::onPlayfairDecrypt() {
             QTextStream out(&outputFile);
             out << QString::fromStdString(result);
             outputFile.close();
+            playfairLoadedFilePath.clear();
             QMessageBox::information(this, "Успешно", "Расшифрованный файл сохранен как:\n" + outputFileName);
         } else {
             QMessageBox::critical(this, "Ошибка", "Не удалось сохранить файл: " + outputFileName);
@@ -359,6 +395,8 @@ void MainWindow::onPlayfairClear() {
     playfairOutput->clear();
     playfairKey1->clear();
     playfairKey2->clear();
+    playfairKey3->clear();
+    playfairKey4->clear();
     playfairLoadedFilePath.clear();
 }
 
@@ -406,6 +444,7 @@ void MainWindow::onVigenereEncrypt() {
             QTextStream out(&outputFile);
             out << QString::fromUtf8(result.c_str());
             outputFile.close();
+            vigenereLoadedFilePath.clear();
             QMessageBox::information(this, "Успешно", "Зашифрованный файл сохранен как:\n" + outputFileName);
         } else {
             QMessageBox::critical(this, "Ошибка", "Не удалось сохранить файл: " + outputFileName);
@@ -457,6 +496,7 @@ void MainWindow::onVigenereDecrypt() {
             QTextStream out(&outputFile);
             out << QString::fromUtf8(result.c_str());
             outputFile.close();
+            vigenereLoadedFilePath.clear();
             QMessageBox::information(this, "Успешно", "Расшифрованный файл сохранен как:\n" + outputFileName);
         } else {
             QMessageBox::critical(this, "Ошибка", "Не удалось сохранить файл: " + outputFileName);

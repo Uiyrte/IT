@@ -44,6 +44,8 @@ private:
     QTextEdit *playfairOutput;
     QLineEdit *playfairKey1;
     QLineEdit *playfairKey2;
+    QLineEdit *playfairKey3;
+    QLineEdit *playfairKey4;
     QPushButton *playfairEncryptBtn;
     QPushButton *playfairDecryptBtn;
     QPushButton *playfairLoadBtn;
