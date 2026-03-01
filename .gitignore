@@ -1,0 +1,42 @@
+# Build directory
+build/
+build-*/
+
+# Qt generated files
+*.autosave
+*.user
+*.pro.user
+*.qmlproject.user
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Compiled files
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.app
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Output files
+*.enc
+*.dec
+encrypted_*
+decrypted_*
